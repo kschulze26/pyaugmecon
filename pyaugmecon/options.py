@@ -26,28 +26,46 @@ class Options:
         self.nadir_r = opts.get("nadir_ratio", 1)  # Nadir ratio
         self.logdir = opts.get("logging_folder", "logs")  # Folder to save logs
         self.early_exit = opts.get("early_exit", True)  # Whether to enable early exit
-        self.bypass = opts.get("bypass_coefficient", True)  # Whether to enable bypass coefficient
+        self.bypass = opts.get(
+            "bypass_coefficient", True
+        )  # Whether to enable bypass coefficient
         self.flag = opts.get("flag_array", True)  # Whether to use flag array
         self.cpu_count = opts.get("cpu_count", cpu_count())  # Number of CPUs to use
         self.redivide_work = opts.get("redivide_work", True)  # Whether to redivide work
         self.model_fn = opts.get("pickle_file", "model.p")  # Pickle file name
-        self.shared_flag = opts.get("shared_flag", True)  # Whether to use shared flag array
+        self.shared_flag = opts.get(
+            "shared_flag", True
+        )  # Whether to use shared flag array
         self.output_excel = opts.get("output_excel", True)  # Whether to output to Excel
-        self.process_logging = opts.get("process_logging", False)  # Whether to enable process logging
-        self.process_timeout = opts.get("process_timeout", None)  # Timeout for processes
+        self.process_logging = opts.get(
+            "process_logging", False
+        )  # Whether to enable process logging
+        self.process_timeout = opts.get(
+            "process_timeout", None
+        )  # Timeout for processes
         self.solver_name = opts.get("solver_name", "gurobi")  # Name of solver
         self.solver_io = opts.get("solver_io", "python")  # IO mode of solver
 
         self.solver_opts = solver_opts  # Solver options
         self.solver_opts["MIPGap"] = solver_opts.get("MIPGap", 0.0)  # MIP gap
-        self.solver_opts["NonConvex"] = solver_opts.get("NonConvex", 2)  # Nonconvex setting
+        self.solver_opts["NonConvex"] = solver_opts.get(
+            "NonConvex", 2
+        )  # Nonconvex setting
+        self.export_solved_pyomo_models = opts.get(
+            "export_solved_pyomo_models", False
+        )  # Whether the solved pyomo models should be exported as a pickled file to access them later for further post-processing
+        self.custom_export_path = opts.get(
+            "custom_export_path", None
+        )  # Custom path to which the pyomo models are exported
 
         # Remove None values from dict when user has overriden them
         for key, value in dict(self.solver_opts).items():
             if value is None or value:
                 del self.solver_opts[key]
 
-        self.time_created = time.strftime("%Y%m%d-%H%M%S")  # Time the options object was created
+        self.time_created = time.strftime(
+            "%Y%m%d-%H%M%S"
+        )  # Time the options object was created
         self.log_name = self.name + "_" + str(self.time_created)  # Name of log file
 
     def log(self):
@@ -65,6 +83,10 @@ class Options:
         self.logger.info(f"CPU Count: {self.cpu_count}")
         self.logger.info(f"Redivide work: {self.redivide_work}")
         self.logger.info(f"Shared flag array: {self.shared_flag}")
+        if self.export_solved_pyomo_models:
+            self.logger.info(
+                f"Export the solved pyomo models as a pickled file to {self.custom_export_path}"
+            )
         self.logger.info(Helper.separator())
 
     def check(self, num_objfun):

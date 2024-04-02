@@ -154,7 +154,9 @@ class Model:
 
         The result, termination condition, and solver status are stored as class attributes.
         """
-        opt = pyo.SolverFactory(self.opts.solver_name, solver_io=self.opts.solver_io, manage_env=True)
+        opt = pyo.SolverFactory(
+            self.opts.solver_name, solver_io=self.opts.solver_io, manage_env=True
+        )
         opt.options.update(self.opts.solver_opts)
         try:
             self.result = opt.solve(self.model)
@@ -175,7 +177,8 @@ class Model:
         """
         model_vars = self.model.component_map(ctype=Var, active=True)
         vars_dict = {
-            v.name: pd.Series(v.extract_values(), index=v.extract_values().keys()) for v in model_vars.values()
+            v.name: pd.Series(v.extract_values(), index=v.extract_values().keys())
+            for v in model_vars.values()
         }
         return vars_dict
 
@@ -194,6 +197,35 @@ class Model:
         model_file = open(self.opts.model_fn, "rb")
         self.model = cloudpickle.load(model_file)
 
+    def save_pyomo_model_to_file(self, sol_id, custom_path=None):
+        """
+        pickles the pyomo instance of the model and saves it as a file
+
+        Parameters
+        ----------
+        sol_id :
+            unique identifier used to save and access the solution later on.
+            If not defined otherwise within the solver_process this is a tuple in
+            the form "(obj_value_1, obj_value_2, ...)"
+        custom_path : str
+            can be used to save the model to a custom path
+            default: None -> models get exported to the current working directory
+        """
+        file_name = f"_pyomo_model_{sol_id}"
+        file_path = file_name
+        if custom_path:
+            if not os.path.isdir(custom_path):
+                os.mkdir(custom_path)
+            file_path = os.path.join(custom_path, file_name)
+        if self.model:
+            with open(f"{file_path}.pkl", mode="wb") as file:
+                cloudpickle.dump(self.model, file)
+        else:
+            raise ValueError(
+                "Currently no instance of a pyomo model found - this might be the case because the model is currently pickled!"
+            )
+        return f"{file_path}.pkl"
+
     def clean(self):
         """
         Remove the Pyomo model file.
@@ -210,7 +242,10 @@ class Model:
         bool
             True if the Pyomo model has been solved optimally, False otherwise.
         """
-        return self.status == pyo.SolverStatus.ok and self.term == pyo.TerminationCondition.optimal
+        return (
+            self.status == pyo.SolverStatus.ok
+            and self.term == pyo.TerminationCondition.optimal
+        )
 
     def is_infeasible(self):
         """
@@ -234,7 +269,9 @@ class Model:
 
         """
         # Determine objective sense for each objective
-        self.obj_goal = [-1 if self.obj_sense(o) == minimize else 1 for o in self.iter_obj]
+        self.obj_goal = [
+            -1 if self.obj_sense(o) == minimize else 1 for o in self.iter_obj
+        ]
 
         # Cconvert minimize objectives to maximize objectives and negate their expressions
         for o in self.iter_obj:
@@ -352,5 +389,6 @@ class Model:
             )
 
             self.model.con_list.add(
-                expr=self.model.obj_list[o + 1].expr - self.model.Slack[o + 1] == self.model.e[o + 1]
+                expr=self.model.obj_list[o + 1].expr - self.model.Slack[o + 1]
+                == self.model.e[o + 1]
             )

@@ -8,7 +8,9 @@ from pyaugmecon.queue_handler import QueueHandler
 
 
 class SolverProcess(Process):
-    def __init__(self, p_num, opts: Options, model: Model, queues: QueueHandler, flag: Flag):
+    def __init__(
+        self, p_num, opts: Options, model: Model, queues: QueueHandler, flag: Flag
+    ):
         """
         Initialize the SolverProcess object.
 
@@ -67,7 +69,9 @@ class SolverProcess(Process):
 
             # Process each job in the work list
             for c in work:
-                log = f"Process: {self.p_num}, index: {c}, "  # Initialize logging string
+                log = (
+                    f"Process: {self.p_num}, index: {c}, "  # Initialize logging string
+                )
                 cp_end = self.opts.gp - 1  # Set the end index for this job
                 self.model.progress.increment()  # Increment progress counter for this model
 
@@ -114,7 +118,9 @@ class SolverProcess(Process):
 
                     # Set flag if flag is enabled
                     if self.opts.flag:
-                        self.flag.set(early_exit_range, self.opts.gp, self.model.iter_obj2)
+                        self.flag.set(
+                            early_exit_range, self.opts.gp, self.model.iter_obj2
+                        )
 
                     jump = do_jump(c[0], self.opts.gp)  # Set jump
                     log += "infeasible"  # Log infeasibility
@@ -146,7 +152,9 @@ class SolverProcess(Process):
                         self.model.obj_val(0)
                         - self.opts.eps
                         * sum(
-                            10 ** (-1 * (o)) * self.model.slack_val(o + 1) / self.model.obj_range[o]
+                            10 ** (-1 * (o))
+                            * self.model.slack_val(o + 1)
+                            / self.model.obj_range[o]
                             for o in self.model.iter_obj2
                         )
                     )
@@ -158,6 +166,13 @@ class SolverProcess(Process):
                     sols_dict = {tuple(sols): self.model.get_vars()}
                     self.queues.put_result(sols_dict)
 
+                    # Save solved model as pickled file, if export is enabled
+                    if self.opts.export_solved_pyomo_models:
+                        path = self.model.save_pyomo_model_to_file(
+                            sol_id=tuple(sols), custom_path=self.opts.custom_export_path
+                        )
+                        log += "\n"
+                        log += f"Saved pyomo model to {path}"
                     # Log solutions if process logging is enabled
                     log += f"solutions: {sols}"
                     if self.opts.process_logging:
