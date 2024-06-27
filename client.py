@@ -10,10 +10,13 @@ if __name__ == "__main__":
         "name": model_type,
         "grid_points": 540,
         "nadir_points": [1031, 1069],
+        "cpu_count": 8,
     }
 
     pyaugmecon = PyAugmecon(three_kp_model(model_type), opts)  # instantiate  PyAugmecon
     pyaugmecon.solve()  # solve PyAugmecon multi-objective optimization problem
     sols = pyaugmecon.get_pareto_solutions()  # get all pareto solutions
     payoff = pyaugmecon.get_payoff_table()  # get the payoff table
-    decision_vars = pyaugmecon.get_decision_variables(sols[0])  # get the decision variables
+    decision_vars = pyaugmecon.get_decision_variables(
+        sols[0]
+    )  # get the decision variables

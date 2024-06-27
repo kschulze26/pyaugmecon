@@ -51,6 +51,7 @@ class Options:
         self.solver_opts["NonConvex"] = solver_opts.get(
             "NonConvex", 2
         )  # Nonconvex setting
+        self.solver_opts["LogToConsole"] = 1
         self.export_solved_pyomo_models = opts.get(
             "export_solved_pyomo_models", False
         )  # Whether the solved pyomo models should be exported as a pickled file to access them later for further post-processing
@@ -60,7 +61,7 @@ class Options:
 
         # Remove None values from dict when user has overriden them
         for key, value in dict(self.solver_opts).items():
-            if value is None or value:
+            if value is None or not value:
                 del self.solver_opts[key]
 
         self.time_created = time.strftime(
