@@ -159,7 +159,9 @@ class Model:
         )
         opt.options.update(self.opts.solver_opts)
         try:
-            self.result = opt.solve(self.model)
+            self.result = opt.solve(
+                self.model, tee=True
+            )  # the tee parameter allows for the progress of the optimization beeing displayed within the console
             self.term = self.result.solver.termination_condition
             self.status = self.result.solver.status
         finally:
@@ -323,9 +325,12 @@ class Model:
             for j in self.iter_obj:
                 if i != j:
                     set_payoff(i, j)
+                    print(self.payoff)
                     self.model.pcon_list.add(expr=self.obj_expr(j) == self.payoff[i, j])
 
             self.model.pcon_list.clear()
+        print("PAYOFF COMPLETE")
+        print(self.payoff)
 
     def find_obj_range(self):
         """
