@@ -44,7 +44,7 @@ class Options:
 
         # Remove None values from dict when user has overriden them
         for key, value in dict(self.solver_opts).items():
-            if value is None or not value:
+            if value is None or (not value and value != 0):
                 del self.solver_opts[key]
 
         self.time_created = time.strftime("%Y%m%d-%H%M%S")  # Time the options object was created
