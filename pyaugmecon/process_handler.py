@@ -59,7 +59,9 @@ class ProcessHandler:
         Check whether the process timeout has been reached.
         """
         while self.runtime.get() <= self.opts.process_timeout:
-            if not any(p.is_alive() for p in self.procs):  # Check if any process has exited
+            if not any(
+                p.is_alive() for p in self.procs
+            ):  # Check if any process has exited
                 break
             time.sleep(1)
         else:
@@ -78,13 +80,15 @@ class ProcessHandler:
         for p in self.procs:
             if not self.any_killed and p.exitcode != None and p.exitcode < 0:
                 self.any_killed = True
-                self.logger.warning("A worker was killed, computations are not guaranteed to be completed.")
+                self.logger.warning(
+                    "A worker was killed, computations are not guaranteed to be completed."
+                )
                 self.terminate_early()
-            
+
             all_exited = p.join(1) == None and p.exitcode != None and all_exited
 
         return all_exited
-        
+
     def terminate_early(self):
         self.logger.info("Gracefully stopping all workers.")
         self.queues.empty_job_qs()

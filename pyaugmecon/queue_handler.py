@@ -58,9 +58,13 @@ class QueueHandler:
 
         """
         try:
-            return self.job_qs[i].get_nowait()  # Try to get the work for a given process without blocking
+            return self.job_qs[
+                i
+            ].get_nowait()  # Try to get the work for a given process without blocking
         except queue.Empty:  # If the queue is empty
-            longest_q = self.get_longest_q()  # Get the index of the job queue with the most items
+            longest_q = (
+                self.get_longest_q()
+            )  # Get the index of the job queue with the most items
             if self.opts.redivide_work and longest_q is not None:
                 # If the `redivide_work` flag is set to True and there is work available, redivide the work
                 return self.get_work(longest_q)
@@ -121,14 +125,24 @@ class QueueHandler:
         ]  # Divide the work into blocks
 
         # Divide the blocks into sub-blocks and remove empty sub-blocks
-        blocks = [x for x in np.array_split(np.array(blocks), self.opts.cpu_count) if x.size > 0]
+        blocks = [
+            x
+            for x in np.array_split(np.array(blocks), self.opts.cpu_count)
+            if x.size > 0
+        ]
 
         manager = Manager()
         self.proc_count = len(blocks)  # Set the number of processes to be used
-        self.job_qs = [manager.Queue() for _ in range(self.proc_count)]  # Create a job queue for each process
-        self.logger.info(f"Dividing grid over {self.proc_count} process(es)")  # Log the number of processes
+        self.job_qs = [
+            manager.Queue() for _ in range(self.proc_count)
+        ]  # Create a job queue for each process
+        self.logger.info(
+            f"Dividing grid over {self.proc_count} process(es)"
+        )  # Log the number of processes
 
         for i, block in enumerate(blocks):
             for item in block:
                 item = [tuple(x) for x in item.tolist()]
-                self.job_qs[i].put_nowait(item)  # Put each item in the job queue for the corresponding process
+                self.job_qs[i].put_nowait(
+                    item
+                )  # Put each item in the job queue for the corresponding process
