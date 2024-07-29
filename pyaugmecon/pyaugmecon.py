@@ -15,7 +15,8 @@ from pyaugmecon.options import Options
 from pyaugmecon.process_handler import ProcessHandler
 from pyaugmecon.queue_handler import QueueHandler
 
-augmecon_reserved_component_names = {'Os', 'Slack', 'e', 'con_list', 'pcon_list'}
+augmecon_reserved_component_names = {"Os", "Slack", "e", "con_list", "pcon_list"}
+
 
 class PyAugmecon:
     def __init__(self, model: PyomoModel, opts: Options, solver_opts={}):
@@ -46,7 +47,9 @@ class PyAugmecon:
         self.opts.log()
         self.model = Model(model, self.opts)
 
-        self.opts.check(self.model.n_obj)  # Check the number of objectives against the given options
+        self.opts.check(
+            self.model.n_obj
+        )  # Check the number of objectives against the given options
         Config.warnings["not_compiled"] = False  # Suppress pymoo warnings
 
         # Initialize solutions
@@ -69,17 +72,22 @@ class PyAugmecon:
             self.names_in_user_model.append(c_.name)
 
         self.names_in_user_model = set(self.names_in_user_model)
-        self.component_conflicts = self.names_in_user_model.intersection(augmecon_reserved_component_names)
+        self.component_conflicts = self.names_in_user_model.intersection(
+            augmecon_reserved_component_names
+        )
         self.num_conflicts = len(self.component_conflicts)
 
         if self.num_conflicts != 0:
-            self.logger.info(f'Your model contains {self.num_conflicts} component name conflicts.'
-                             f' Rename: {self.component_conflicts}')
+            self.logger.info(
+                f"Your model contains {self.num_conflicts} component name conflicts."
+                f" Rename: {self.component_conflicts}"
+            )
 
-            raise Exception(f'{self.num_conflicts} of your pyomo model names raised a conflict'
-                            f' with PyAugmecon reserved component names.\n'
-                            f'To avoid errors, you must rename the following components: {self.component_conflicts}')
-
+            raise Exception(
+                f"{self.num_conflicts} of your pyomo model names raised a conflict"
+                f" with PyAugmecon reserved component names.\n"
+                f"To avoid errors, you must rename the following components: {self.component_conflicts}"
+            )
 
     def _find_solutions(self):
         """
@@ -111,7 +119,9 @@ class PyAugmecon:
 
         # In case all worker processes were killed, not all work may have been done.
         if self.procs.any_killed:
-            raise Exception("At least one worker exited prematurely, not all computations may have been done.")
+            raise Exception(
+                "At least one worker exited prematurely, not all computations may have been done."
+            )
 
         # Clean the pickled model
         self.model.clean()
@@ -121,7 +131,10 @@ class PyAugmecon:
             return np.array(sols) * self.model.obj_goal
 
         def convert_obj_goal_dict(sols: dict):
-            return {(tuple(x * y for x, y in zip(key, self.model.obj_goal))): sols[key] for key in sols}
+            return {
+                (tuple(x * y for x, y in zip(key, self.model.obj_goal))): sols[key]
+                for key in sols
+            }
 
         def keep_undominated(pts):
             pts = np.array(pts)
@@ -141,14 +154,17 @@ class PyAugmecon:
 
         # Remove duplicate solutions due to numerical issues by rounding
         self.unique_sols = {
-            tuple(round(val, self.opts.round) for val in key): value for key, value in self.sols.items()
+            tuple(round(val, self.opts.round) for val in key): value
+            for key, value in self.sols.items()
         }
         self.num_unique_sols = len(self.unique_sols)
 
         # Remove dominated solutions
         unique_pareto_keys = keep_undominated(list(self.unique_sols.keys()))
         unique_pareto_keys = [tuple(subarr) for subarr in unique_pareto_keys]
-        self.unique_pareto_sols = {k: self.unique_sols[k] for k in unique_pareto_keys if k in self.unique_sols}
+        self.unique_pareto_sols = {
+            k: self.unique_sols[k] for k in unique_pareto_keys if k in self.unique_sols
+        }
         self.num_unique_pareto_sols = len(self.unique_pareto_sols)
 
         # Multiply by -1 if original objective was minimization
@@ -169,9 +185,15 @@ class PyAugmecon:
 
         # Write the data to the sheets in the Excel file
         pd.DataFrame(self.model.e).to_excel(excel_writer=writer, sheet_name="e_points")
-        pd.DataFrame(self.model.payoff).to_excel(excel_writer=writer, sheet_name="payoff_table")
-        pd.DataFrame(Helper.keys_to_list(self.sols)).to_excel(excel_writer=writer, sheet_name="sols")
-        pd.DataFrame(Helper.keys_to_list(self.unique_sols)).to_excel(excel_writer=writer, sheet_name="unique_sols")
+        pd.DataFrame(self.model.payoff).to_excel(
+            excel_writer=writer, sheet_name="payoff_table"
+        )
+        pd.DataFrame(Helper.keys_to_list(self.sols)).to_excel(
+            excel_writer=writer, sheet_name="sols"
+        )
+        pd.DataFrame(Helper.keys_to_list(self.unique_sols)).to_excel(
+            excel_writer=writer, sheet_name="unique_sols"
+        )
         pd.DataFrame(Helper.keys_to_list(self.unique_pareto_sols)).to_excel(
             excel_writer=writer, sheet_name="unique_pareto_sols"
         )
