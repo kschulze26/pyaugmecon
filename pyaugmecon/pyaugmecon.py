@@ -249,11 +249,15 @@ class PyAugmecon:
         self.runtime = Timer()  # Start the timer to measure the runtime
         self.model.min_to_max()  # Convert minimization problems to maximization problems
         self.model.construct_payoff()  # Construct a payoff table from the objective function values
+        print("PYAUGMECON: find objective range")
         self.model.find_obj_range()  # Find the range of each objective function
+        print("PYAUGMECON: converting problem")
         self.model.convert_prob()  # Convert the payoff table
-
+        print("PYAUGMECON: find solutions")
         self._find_solutions()  # Find all solutions to the optimization problem
+        print("PYAUGMECON: identify unique solutions")
         self._process_solutions()  # Identify the unique solutions
+        print("PYAUGMECON: compute hv indicator")
         self._get_hv_indicator()  # Compute the HV indicator
 
         # Save the results to an Excel file if requested

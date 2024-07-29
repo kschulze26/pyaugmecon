@@ -1,6 +1,7 @@
 import logging
 import os
 
+import time
 import cloudpickle
 import numpy as np
 import pandas as pd
@@ -154,15 +155,27 @@ class Model:
 
         The result, termination condition, and solver status are stored as class attributes.
         """
+        print("Setting up solver factory...")
+        print(time.time())
         opt = pyo.SolverFactory(
-            self.opts.solver_name, solver_io=self.opts.solver_io, manage_env=True
+            self.opts.solver_name,
+            solver_io=self.opts.solver_io,
+            manage_env=True,
+            report_timing=True,
         )
+        print("Updating Options...")
+        print(time.time())
         opt.options.update(self.opts.solver_opts)
         try:
-            self.result = opt.solve(self.model)
+            print("Starting optimization...")
+            print(time.time())
+            self.result = opt.solve(self.model, tee=True, report_timing=True)
+            print("Solved.")
+            print(time.time())
             self.term = self.result.solver.termination_condition
             self.status = self.result.solver.status
         finally:
+            print("Entered finally condition...")
             if self.opts.solver_name.lower() == "gurobi":
                 opt.close()
 
@@ -302,30 +315,67 @@ class Model:
                 The index of the second objective function to optimize.
 
             """
+            print("Setting Payoff...")
+            print(time.time())
+            print("Activating objective...")
+            print(time.time())
             self.obj_activate(j)
+            print("Calling solve...")
+            print(time.time())
             self.solve()
+            print("Solving complete")
+            print(time.time())
             self.progress.increment()
             self.payoff[i, j] = self.obj_val(j)
+            print(time.time())
+            print("Current status of payoff table:")
+            print(self.payoff)
+            print("Deactivating objective")
+            print(time.time())
             self.obj_deactivate(j)
+            print(time.time())
 
         # Initialize payoff matrix with infinity values
         self.payoff = np.full((self.n_obj, self.n_obj), np.inf)
         self.model.pcon_list = ConstraintList()
 
         # Optimize each objective function independently (diagonal elements)
+        print("Optimize each objective function independently (diagonal elements)")
+        print(time.time())
         for i in self.iter_obj:
+            print("Starting optimization...")
+            print(time.time())
             set_payoff(i, i)
 
         # Optimize each pair of objective functions (off-diagonal elements)
         for i in self.iter_obj:
-            self.model.pcon_list.add(expr=self.obj_expr(i) == self.payoff[i, i])
+            # use this if you want to use an inequality constraint instead of an equality constraint for the first diagonal entry of the payoff table
+            # TODO implement passing of threshold parameter so this is not hard-coded
+            inequality_threshold = 0.000001
+            self.model.pcon_list.add(
+                expr=self.obj_expr(i) >= (1 + inequality_threshold) * self.payoff[i, i]
+            )
+            # TODO Add switch for equality and inequality constraint
+            # Below is the original equality constraint:
+            # self.model.pcon_list.add(expr=self.obj_expr(i) == self.payoff[i, i])
 
             for j in self.iter_obj:
                 if i != j:
+
                     set_payoff(i, j)
+
+                    print("Adding results of previous optimization as constraint")
+                    print(time.time())
+
                     self.model.pcon_list.add(expr=self.obj_expr(j) == self.payoff[i, j])
 
+                    print("Constraint added.")
+                    print(time.time())
+            print("clearing constraints")
+            print(time.time())
             self.model.pcon_list.clear()
+            print("cleared")
+            print(time.time())
 
     def find_obj_range(self):
         """
