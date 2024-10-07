@@ -349,16 +349,13 @@ class Model:
 
         # Optimize each pair of objective functions (off-diagonal elements)
         for i in self.iter_obj:
-            # use this if you want to use an inequality constraint instead of an equality constraint for the first diagonal entry of the payoff table
-            # TODO implement passing of threshold parameter so this is not hard-coded
-            inequality_threshold = 0.000001
-            self.model.pcon_list.add(
-                expr=self.obj_expr(i) >= (1 + inequality_threshold) * self.payoff[i, i]
-            )
-            # TODO Add switch for equality and inequality constraint
-            # Below is the original equality constraint:
-            # self.model.pcon_list.add(expr=self.obj_expr(i) == self.payoff[i, i])
-
+            if self.opts.inequality_threshold == 0:  # Below is the original equality constraint:
+                self.model.pcon_list.add(expr=self.obj_expr(i) == self.payoff[i, i])
+            else:
+                # use this if you want to use an inequality constraint instead of an equality constraint for the first diagonal entry of the payoff table
+                self.model.pcon_list.add(
+                    expr=self.obj_expr(i) >= (1 + self.opts.inequality_threshold) * self.payoff[i, i]
+                )
             for j in self.iter_obj:
                 if i != j:
 

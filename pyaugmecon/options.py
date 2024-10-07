@@ -57,6 +57,8 @@ class Options:
         self.custom_export_path = opts.get(
             "custom_export_path", None
         )  # Custom path to which the pyomo models are exported
+        
+        self.inequality_threshold = opts.get("inequality_threshold", 0) # Option to pass an inequality threshold for the payoff table 
 
         # Remove None values from dict when user has overriden them
         for key, value in dict(self.solver_opts).items():
